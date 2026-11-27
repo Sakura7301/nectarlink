@@ -708,6 +708,8 @@ pub struct Settings {
     /// playback (the phone still gets the sound).
     pub mute_while_watched: bool,
     /// This PC's name on other devices, or "" for its hostname (#648).
+    /// The aliases keep a name chosen in the fork before #648 was merged.
+    #[serde(alias = "device_display_name", alias = "deviceDisplayName")]
     pub own_name: String,
     /// Quiet phone notification pop-ups on the PC while the phone is in Do Not Disturb.
     #[serde(alias = "sync_dnd")]
@@ -2070,5 +2072,17 @@ mod tests {
             Settings { nectar_island_opacity: 55, ..Default::default() }.sanitized().nectar_island_opacity,
             55
         );
+    }
+
+    #[test]
+    fn a_pre_648_pc_name_migrates_to_own_name() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join(FILE_NAME), r#"{ "deviceDisplayName": "Studio PC" }"#).unwrap();
+        let loaded = Settings::load(dir.path());
+        assert_eq!(loaded.own_name, "Studio PC");
+
+        fs::write(dir.path().join(FILE_NAME), r#"{ "device_display_name": "Desk PC" }"#).unwrap();
+        let loaded = Settings::load(dir.path());
+        assert_eq!(loaded.own_name, "Desk PC");
     }
 }

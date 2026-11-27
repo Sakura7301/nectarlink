@@ -236,10 +236,23 @@ class Preferences(context: Context) {
         private const val OWN_NAME = "own_name"
 
         /** The name the user gave this phone, or "" for Android's (#648). */
-        fun ownName(context: Context): String =
-            context.applicationContext
-                .getSharedPreferences("appearance", Context.MODE_PRIVATE)
-                .getString(OWN_NAME, "").orEmpty()
+        fun ownName(context: Context): String {
+            val prefs = context.applicationContext.getSharedPreferences("appearance", Context.MODE_PRIVATE)
+            val current = prefs.getString(OWN_NAME, "").orEmpty()
+            if (current.isNotEmpty()) return current
+            // The fork kept a custom phone name under "device_name"/"custom"
+            // before #648; carry it over the first time the new setting is read.
+            val legacy = context.applicationContext
+                .getSharedPreferences("device_name", Context.MODE_PRIVATE)
+                .getString("custom", null)
+                ?.trim()
+                .orEmpty()
+            if (legacy.isNotEmpty()) {
+                setOwnName(context, legacy)
+                return legacy
+            }
+            return ""
+        }
 
         fun setOwnName(context: Context, name: String) {
             context.applicationContext
