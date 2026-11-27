@@ -261,6 +261,8 @@ Item {
             visible: card.island && card.island.mode === "media"
                 && card.island.lyricLines.length > 0
             width: parent.width
+            // Three lines leave the rest of the card to the notifications.
+            visibleLines: 3
             lines: card.island.lyricLines
             current: card.island.lyricIndex
             progress: card.island.lyricProgress
@@ -387,34 +389,20 @@ Item {
             id: listBox
             visible: Preferences.nectarIslandNotifications && NotificationList.count > 0
             width: parent.width
-            height: Math.min(notifColumn.implicitHeight, 280)
+            // The card body scrolls as one view; the notification rows must
+            // not sit in a nested Flickable that swallows the wheel/drag.
+            height: notifColumn.implicitHeight
 
-            Flickable {
-                id: notifFlick
-                anchors.fill: parent
-                contentWidth: width
-                contentHeight: notifColumn.implicitHeight
-                clip: true
-                boundsBehavior: Flickable.StopAtBounds
+            Column {
+                id: notifColumn
+                width: parent.width
+                spacing: 4
 
-                Column {
-                    id: notifColumn
-                    width: notifFlick.width
-                    spacing: 4
-
-                    Repeater {
-                        model: NotificationList
-                        delegate: CardNotificationRow {}
-                    }
+                Repeater {
+                    model: NotificationList
+                    delegate: CardNotificationRow {}
                 }
             }
-
-            ScrollRail {
-                flick: notifFlick
-                inset: -2
-                thumbColor: card.wash(0.35)
-            }
-            WheelScroll { flick: notifFlick; notch: 96 }
         }
 
         RowLayout {
@@ -441,8 +429,14 @@ Item {
             }
         }
         }
-        WheelScroll { flick: bodyFlick; notch: 72 }
     }
+
+    ScrollRail {
+        flick: bodyFlick
+        inset: -2
+        thumbColor: card.wash(0.30)
+    }
+    WheelScroll { flick: bodyFlick; notch: 72 }
 
     // The Island's own settings page: inside the same card and window, with
     // no second window. Leaving the pointer collapses it with the card.
